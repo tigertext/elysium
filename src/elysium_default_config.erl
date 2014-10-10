@@ -42,11 +42,11 @@ cassandra_session_queue() -> elysium_connection_queue.
 %% @doc Only local host: [{"127.0.0.1", 9042}].
 cassandra_hosts() -> [{"127.0.0.1", 9042}].
 
--spec cassandra_max_restart_delay() -> timeout().
+-spec cassandra_max_restart_delay() -> timeout_in_ms().
 %% @doc Randomly delay connect from 1-100 milliseconds on startup.
 cassandra_max_restart_delay() -> 100.
 
--spec cassandra_connect_timeout() -> timeout().
+-spec cassandra_connect_timeout() -> timeout_in_ms().
 %% @doc Timeout after 50 milliseconds if a seestar session can't be established.
 cassandra_connect_timeout() -> 50.
      

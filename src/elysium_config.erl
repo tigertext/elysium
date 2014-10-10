@@ -84,8 +84,8 @@
 -callback cassandra_lb_queue()                  -> lb_queue_name().
 -callback cassandra_session_queue()             -> session_queue_name().
 -callback cassandra_hosts()                     -> host_list().
--callback cassandra_max_restart_delay()         -> timeout().
--callback cassandra_connect_timeout()           -> timeout().
+-callback cassandra_max_restart_delay()         -> timeout_in_ms().
+-callback cassandra_connect_timeout()           -> timeout_in_ms().
 -callback cassandra_max_sessions()              -> max_sessions().
 -callback cassandra_max_checkout_retry()        -> max_retries().
 -callback cassandra_session_decay_probability() -> decay_prob().
@@ -131,7 +131,7 @@ is_valid_config_vbisect(Bindict) when is_binary(Bindict) ->
     ordsets:is_subset(all_config_bins(), vbisect:fetch_keys(Bindict)).
 
 
--spec make_vbisect_config(lb_queue_name(), session_queue_name(), host_list(), timeout(), timeout(),
+-spec make_vbisect_config(lb_queue_name(), session_queue_name(), host_list(), timeout_in_ms(), timeout_in_ms(),
                           max_sessions(), max_retries(), decay_prob()) -> {vbisect, vbisect:bindict()}.
 %% @doc
 %%   Construct a vbisect binary dictionary from an entire set of configuration parameters.
@@ -185,7 +185,7 @@ round_robin_hosts  ({config_mod,  Config_Module}) -> Config_Module:cassandra_hos
 round_robin_hosts  ({vbisect,           Bindict}) -> {ok, Bin_Value} = vbisect:find(<<"cassandra_hosts">>, Bindict),
                                                      binary_to_term(Bin_Value).
 
--spec max_restart_delay  (config_type()) -> timeout().
+-spec max_restart_delay  (config_type()) -> timeout_in_ms().
 %% @doc
 %%   Get the maximum random delay on connection startup. This number of
 %%   milliseconds times the max_sessions should not exceed the supervisor
@@ -196,7 +196,7 @@ max_restart_delay    ({config_mod,  Config_Module}) -> Config_Module:cassandra_m
 max_restart_delay    ({vbisect,           Bindict}) -> {ok, Bin_Value} = vbisect:find(<<"cassandra_max_restart_delay">>, Bindict),
                                                      binary_to_term(Bin_Value).
 
--spec connect_timeout  (config_type()) -> timeout().
+-spec connect_timeout  (config_type()) -> timeout_in_ms().
 %% @doc Get the time allowed for a cassandra connection before giving up.
 connect_timeout    ({config_mod,  Config_Module}) -> Config_Module:cassandra_connect_timeout();
 connect_timeout    ({vbisect,           Bindict}) -> {ok, Bin_Value} = vbisect:find(<<"cassandra_connect_timeout">>, Bindict),
