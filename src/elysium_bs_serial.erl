@@ -139,13 +139,13 @@ fetch_pid_from_queue(_Queue_Name, Max_Retries, Times_Tried) when Times_Tried >= 
 fetch_pid_from_queue( Queue_Name, Max_Retries, Times_Tried) ->
     case ets_buffer:read_dedicated(Queue_Name) of
 
-        %% Give up if there are no connections available...
-        [] -> none_available;
-
         %% Race condition with checkin, try again...
         %% (Internally, ets_buffer calls erlang:yield() when this happens)
         {missing_ets_data, Queue_Name, _} ->
             fetch_pid_from_queue(Queue_Name, Max_Retries, Times_Tried+1);
+
+        %% Give up if there are no connections available...
+        [] -> none_available;
 
         %% Return only a live pid, otherwise get the next one.
         [{_Node, Session_Id} = Session_Data] when is_pid(Session_Id) ->
@@ -197,7 +197,15 @@ wait_for_session(Config, Pending_Queue, Sid_Reply_Ref, Start_Time, Query_Request
 
                 %% Any other messages are intended for the blocked caller, leave them in the message queue.
 
-            after Reply_Timeout -> {wait_for_session_timeout, Reply_Timeout}
+            after Reply_Timeout ->
+                    %% Handle race condition messaging vs timeout waiting for message.
+                    _ = receive
+                            {sid, Sid_Reply_Ref, Node, Session_Id, Pending_Queue, Is_New_Connection} ->
+                                is_process_alive(Session_Id)
+                                    andalso checkin_connection(Config, Node, Session_Id, Is_New_Connection)
+                        after 0 -> no_msgs
+                        end,
+                    {wait_for_session_timeout, Reply_Timeout}
             end
     end.
 
@@ -302,14 +310,14 @@ decay_session(Config, Session_Id) ->
 checkin_pending(Config, Node, Sid, Pending_Queue, Is_New_Connection) ->
     case ets_buffer:read_dedicated(Pending_Queue) of
 
-        %% There are no pending requests, return the session...
-        [] -> checkin_immediate(Config, Node, Sid, Pending_Queue, Is_New_Connection);
-
         %% Race condition with pend_request, try again...
         %% (Internally, ets_buffer calls erlang:yield() when this happens)
         %% (It is presumed that repeated calling will eventually yield something even [])
         {missing_ets_data, Pending_Queue, _} ->
             checkin_pending(Config, Node, Sid, Pending_Queue, Is_New_Connection);
+
+        %% There are no pending requests, return the session...
+        [] -> checkin_immediate(Config, Node, Sid, Pending_Queue, Is_New_Connection);
 
         %% Got a pending request, let's run it...
         [{{Waiting_Pid, Sid_Reply_Ref}, When_Originally_Queued}] ->
