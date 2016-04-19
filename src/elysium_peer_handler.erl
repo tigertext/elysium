@@ -108,7 +108,7 @@ code_change(_OldVsn, St, _Extra) -> {ok, St}.
 update_nodes(Config, Pid) ->
     Host = elysium_config:seed_node(Config),
     Query = <<"SELECT peer FROM system.peers;">>,
-    lager:info("requesting peers to ~p", [Host]),
+    lager:debug("requesting peers to ~p", [Host]),
     case elysium_connection:one_shot_query(Config, Host, Query, one, trunc(timeout(Config) * 0.9)) of
         {error, _Error} -> lager:error("~p", [_Error]);
         {ok, #rows{rows = []}}   -> lager:warning("update nodes returned empty list");
