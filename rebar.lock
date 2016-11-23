@@ -1,0 +1,24 @@
+{"1.1.0",
+[{<<"edown">>,
+  {git,"https://github.com/esl/edown.git",
+       {ref,"4d18dc4bec89c20c0ba8cab6884ce690ca606f4a"}},
+  1},
+ {<<"eper">>,{pkg,<<"eper">>,<<"0.94.0">>},0},
+ {<<"epocxy">>,
+  {git,"git@github.com:duomark/epocxy.git",
+       {ref,"874f7f747cfd983d01917279bec54865f2dac597"}},
+  0},
+ {<<"ibrowse">>,{pkg,<<"ibrowse">>,<<"4.2.2">>},0},
+ {<<"seestar">>,
+  {git,"git@github.com:tigertext/seestar.git",
+       {ref,"d63e6edbf84970d9ee7d2e403002c9829a8d8858"}},
+  0},
+ {<<"vbisect">>,
+  {git,"git@github.com:jaynel/vbisect.git",
+       {ref,"082c8a21a71868eb924f87305e1916e7b7c7447f"}},
+  0}]}.
+[
+{pkg_hash,[
+ {<<"eper">>, <<"F5FB2DAA0DF8878748E1C598428EDA942A173E5121FF35C1D632129B84593A3A">>},
+ {<<"ibrowse">>, <<"B32B5BAFCC77B7277EFF030ED32E1ACC3F610C64E9F6AEA19822ABCADF681B4B">>}]}
+].
