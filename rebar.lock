@@ -1,7 +1,7 @@
 {"1.1.0",
 [{<<"edown">>,
-  {git,"https://github.com/esl/edown.git",
-       {ref,"4d18dc4bec89c20c0ba8cab6884ce690ca606f4a"}},
+  {git,"https://github.com/tigertext/edown.git",
+       {ref,"754be25f71a04099c83f3ffdff268e70beeb0021"}},
   1},
  {<<"eper">>,{pkg,<<"eper">>,<<"0.94.0">>},0},
  {<<"epocxy">>,
@@ -13,11 +13,11 @@
  {<<"lager">>,{pkg,<<"lager">>,<<"3.2.1">>},0},
  {<<"seestar">>,
   {git,"git@github.com:tigertext/seestar.git",
-       {ref,"d63e6edbf84970d9ee7d2e403002c9829a8d8858"}},
+       {ref,"b3944f07fc3557c1f29ac4ed8f9f190f9e293639"}},
   0},
  {<<"vbisect">>,
   {git,"git@github.com:TT-Markus/vbisect.git",
-       {ref,"082c8a21a71868eb924f87305e1916e7b7c7447f"}},
+       {ref,"178f894b40e32c1de2e938d6dfa3bc88dd7b9a76"}},
   0}]}.
 [
 {pkg_hash,[
