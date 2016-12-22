@@ -17,7 +17,7 @@
   0},
  {<<"vbisect">>,
   {git,"git@github.com:TT-Markus/vbisect.git",
-       {ref,"082c8a21a71868eb924f87305e1916e7b7c7447f"}},
+       {ref,"178f894b40e32c1de2e938d6dfa3bc88dd7b9a76"}},
   0}]}.
 [
 {pkg_hash,[
