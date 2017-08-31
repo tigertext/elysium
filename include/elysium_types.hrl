@@ -23,6 +23,8 @@
 
 -type request_peers_frequency() :: timeout_in_ms().
 
+-type rack_list()        :: [binary()].
+
 %% Currently Cassandra connections are seestar_sessions.
 -type connection_id() :: pid().                    % Live process holding socket to Cassandra.
 -type fun_request()   :: fun((connection_id(), [any()], seestar:consistency()) -> [any()]).

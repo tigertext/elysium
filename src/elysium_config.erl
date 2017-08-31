@@ -68,7 +68,7 @@
          is_valid_config/1,
          is_valid_config_module/1,
          is_valid_config_vbisect/1,
-         make_vbisect_config/17,
+         make_vbisect_config/18,
          make_vbisect_config/1,
 
          is_elysium_config_enabled/1,
@@ -87,7 +87,8 @@
          decay_probability/1,
          seed_node/1,
          request_peers_frequency/1,
-         default_port/1
+         default_port/1,
+         included_racks/1
         ]).
 
 -include("elysium_types.hrl").
@@ -131,7 +132,8 @@ all_config_atoms_ordered() ->
      cassandra_session_decay_probability,
      cassandra_seed_node,
      cassandra_request_peers_frequency,
-     cassandra_default_port
+     cassandra_default_port,
+     cassandra_included_racks
     ].
 
 -spec all_config_atoms_sorted()  -> [atom()].
@@ -170,7 +172,7 @@ is_valid_config_vbisect(Bindict) when is_binary(Bindict) ->
                           timeout_in_ms(), host_list(), timeout_in_ms(), timeout_in_ms(), timeout_in_ms(),
                           max_connections(), max_retries(), decay_prob(),
                           cassandra_node(), request_peers_frequency(),
-                          inet:port_number()) -> {vbisect, vbisect:bindict()}.
+                          inet:port_number(), rack_list()) -> {vbisect, vbisect:bindict()}.
 %% @doc
 %%   Construct a vbisect binary dictionary from individual configuration parameter values.
 %%   The resulting data structure may be passed as a configuration to any of the elysium functions.
@@ -180,7 +182,7 @@ make_vbisect_config(Enabled, Lb_Queue_Name, Buffering_Strategy,
                     Request_Reply_Timeout, [{_Ip, _Port} | _] = Host_List,
                     Connect_Timeout_Millis, Send_Timeout_Millis, Restart_Millis,
                     Max_Connections, Max_Retries, Decay_Prob, {Seed_Host, Seed_Port} = Seed_Node,
-                    Request_Peers_Frequency_Millis, Default_Port)
+                    Request_Peers_Frequency_Millis, Default_Port, Included_Racks)
  when is_atom(Buffering_Strategy),
       is_atom(Lb_Queue_Name),             is_atom(Audit_Ets_Name),
       is_atom(Connection_Queue_Name),     is_atom(Requests_Queue_Name),
@@ -195,7 +197,8 @@ make_vbisect_config(Enabled, Lb_Queue_Name, Buffering_Strategy,
       is_integer(Seed_Port),              Seed_Port   >= 0,
       is_list   (Seed_Host),
       is_integer(Request_Peers_Frequency_Millis), Request_Peers_Frequency_Millis > 0,
-      is_integer(Default_Port), Default_Port > 0, Default_Port =< 65535 ->
+      is_integer(Default_Port), Default_Port > 0, Default_Port =< 65535,
+      is_list   (Included_Racks) ->
 
     Props = [
              {<<"is_elysium_enabled">>,                   boolean_to_binary (Enabled)},
@@ -214,7 +217,8 @@ make_vbisect_config(Enabled, Lb_Queue_Name, Buffering_Strategy,
              {<<"cassandra_session_decay_probability">>,  integer_to_binary (Decay_Prob)},
              {<<"cassandra_seed_node">>,                  term_to_binary    (Seed_Node)},
              {<<"cassandra_request_peers_frequency">>,    integer_to_binary (Request_Peers_Frequency_Millis)},
-             {<<"cassandra_default_port">>,               integer_to_binary (Default_Port)}
+             {<<"cassandra_default_port">>,               integer_to_binary (Default_Port)},
+             {<<"cassandra_included_racks">>,             term_to_binary    (Included_Racks)}
             ],
     {vbisect, vbisect:from_list(Props)}.
 
@@ -360,6 +364,13 @@ default_port ({config_app_config,    App}) -> get_app_config(App, cassandra_defa
 default_port ({config_mod, Config_Module}) -> Config_Module:cassandra_default_port();
 default_port ({vbisect,          Bindict}) -> {ok, Bin_Value} = vbisect:find(<<"cassandra_default_port">>, Bindict),
                                               binary_to_integer(Bin_Value).
+
+-spec included_racks(config_type()) -> rack_list().
+%% @doc Get the default port for elysium requests
+included_racks ({config_app_config,    App}) -> get_app_config(App, cassandra_included_racks);
+included_racks ({config_mod, Config_Module}) -> Config_Module:cassandra_default_included_racks();
+included_racks ({vbisect,          Bindict}) -> {ok, Bin_Value} = vbisect:find(<<"cassandra_included_racks">>, Bindict),
+                                                binary_to_term(Bin_Value).
 
 boolean_to_binary(true)    -> <<"1">>;
 boolean_to_binary(false)   -> <<"0">>.
