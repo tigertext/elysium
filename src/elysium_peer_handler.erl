@@ -107,13 +107,14 @@ code_change(_OldVsn, St, _Extra) -> {ok, St}.
 
 update_nodes(Config, Pid) ->
     Host = elysium_config:seed_node(Config),
-    Query = <<"SELECT peer FROM system.peers;">>,
+    Query = <<"SELECT peer, rack FROM system.peers;">>,
     lager:info("requesting peers to ~p", [Host]),
     case elysium_connection:one_shot_query(Config, Host, Query, one, trunc(timeout(Config) * 0.9)) of
         {error, _Error} -> lager:error("~p", [_Error]);
         {ok, #rows{rows = []}}   -> lager:warning("update nodes returned empty list");
         {ok, #rows{rows = Rows}} -> lager:debug("requesting peers result: ~p", [Rows]),
-                                    Nodes = [to_host_port(N, Config) || N <- Rows],
+                                    Nodes = [to_host_port(N, Config) || N <- keep_relevant_peers(Rows, Config)],
+                                    (Nodes =:= []) andalso lager:warning("no relevant nodes returned"),
                                     Pid ! {update_nodes, self(), sets:to_list(sets:from_list([Host | Nodes]))},
                                     ok
     end.
@@ -135,3 +136,12 @@ to_host_port([Term], Config) ->
     Host = inet_parse:ntoa(Term),
     Port = elysium_config:default_port(Config),
     {Host, Port}.
+
+keep_relevant_peers(Rows, Config) ->
+    Included_Racks = elysium_config:included_racks(Config),
+    [[Peer] || [Peer, Rack] <- Rows, is_relevant_rack(Rack, Included_Racks)].
+
+is_relevant_rack(_, []) ->
+    true;
+is_relevant_rack(Rack, Included_Racks) ->
+    lists:member(Rack, Included_Racks).
