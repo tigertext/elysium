@@ -4,8 +4,8 @@
   {vsn, "0.2.3"},
   {id, "elysium"},
   {registered, [elysium_sup, elysium_connection_sup]},
-  {applications, [kernel, stdlib]},
-  {included_applications, [epocxy, eper, seestar, vbisect]},
+  {applications, [kernel, stdlib, epocxy, eper, seestar, vbisect]},
+  {included_applications, []},
   {mod, {elysium, []}},
   {modules, []},
   {env, []}
