@@ -207,11 +207,14 @@ with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection,
                 true  ->
                     After_Checkout_Connection = erlang:now(),
                     Checkout_Connection_Duration = round(timer:now_diff(After_Checkout_Connection, Before_Checkout_Connection)/1000),
-                    elysium_prometheus:report_metrics(cassandra_get_connection_duration_milliseconds,
-                        Checkout_Connection_Duration),
+                    elysium_prometheus:report_metrics(cassandra_get_connection_duration_milliseconds, Cmd_Details, Checkout_Connection_Duration),
                     Reply_Timeout = elysium_config:request_reply_timeout(Config),
                     Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
+                    Before_Exec_Cmd = erlang:now(),
                     Reply = elysium_buffering_strategy:handle_pending_request(Config, BS_Module, 0, Reply_Timeout, Node, Sid, Query_Request),
+                    After_Exec_Cmd = erlang:now(),
+                    Exec_Cmd_Duration = round(timer:now_diff(After_Exec_Cmd, Before_Exec_Cmd)/1000),
+                    elysium_prometheus:report_metrics(cassandra_exec_cmd_duration_milliseconds, Cmd_Details, Exec_Cmd_Duration),
                     handle_mod_fun_reply(Buffering_Strategy, Reply, Mod, Fun, Args)
             end
     end.
