@@ -22,3 +22,5 @@ relx
 erl_crash.dump
 .erlang.mk.packages.*
 .rebar
+*.iml
+.idea/
