@@ -151,7 +151,8 @@ with_connection(Config, Session_Fun, Args, Consistency)
         {Node, Sid} when is_pid(Sid) ->
             case is_process_alive(Sid) of
                 false -> with_connection(Config, Session_Fun, Args, Consistency);
-                true  -> Reply_Timeout = elysium_config:request_reply_timeout(Config),
+                true  ->
+                        Reply_Timeout = elysium_config:request_reply_timeout(Config),
                          Query_Request = {bare_fun, Config, Session_Fun, Args, Consistency},
                          Reply = elysium_buffering_strategy:handle_pending_request
                                    (Config, BS_Module, 0, Reply_Timeout, Node, Sid, Query_Request),
@@ -170,20 +171,50 @@ with_connection(Config, Mod, Fun, Args, Consistency)
   when is_atom(Mod), is_atom(Fun), is_list(Args) ->
     true = erlang:function_exported(Mod, Fun, 3),
     {Buffering_Strategy, BS_Module} = get_buffer_strategy_module(Config),
+    Cmd_Details = get_cmd_details(Fun, Args),
+    Before_Checkout_Connection = erlang:now(),
+    case elysium_buffering_strategy:checkout_connection(Config) of
+        none_available ->
+            buffer_mod_fun_call(Config, Mod, Fun, Args, Consistency, Buffering_Strategy);
+        {Node, Sid} when is_pid(Sid) ->
+            case is_process_alive(Sid) of
+                false -> with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection, Cmd_Details);
+                true  ->
+                    After_Checkout_Connection = erlang:now(),
+                    Checkout_Connection_Duration = round(timer:now_diff(After_Checkout_Connection, Before_Checkout_Connection)/1000),
+                    elysium_prometheus:report_metrics(cassandra_get_connection_duration_milliseconds, Cmd_Details, Checkout_Connection_Duration),
+                    Reply_Timeout = elysium_config:request_reply_timeout(Config),
+                    Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
+                    Before_Exec_Cmd = erlang:now(),
+                    Reply = elysium_buffering_strategy:handle_pending_request(Config, BS_Module, 0, Reply_Timeout, Node, Sid, Query_Request),
+                    After_Exec_Cmd = erlang:now(),
+                    Exec_Cmd_Duration = round(timer:now_diff(After_Exec_Cmd, Before_Exec_Cmd)/1000),
+                    elysium_prometheus:report_metrics(cassandra_exec_cmd_duration_milliseconds, Cmd_Details, Exec_Cmd_Duration),
+                    handle_mod_fun_reply(Buffering_Strategy, Reply, Mod, Fun, Args)
+            end
+    end.
+
+with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection, Cmd_Details)
+    when is_atom(Mod), is_atom(Fun), is_list(Args) ->
+    true = erlang:function_exported(Mod, Fun, 3),
+    {Buffering_Strategy, BS_Module} = get_buffer_strategy_module(Config),
     case elysium_buffering_strategy:checkout_connection(Config) of
         none_available ->
             buffer_mod_fun_call(Config, Mod, Fun, Args, Consistency, Buffering_Strategy);
         {Node, Sid} when is_pid(Sid) ->
             case is_process_alive(Sid) of
                 false -> with_connection(Config, Mod, Fun, Args, Consistency);
-                true  -> Reply_Timeout = elysium_config:request_reply_timeout(Config),
-                         Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
-                         Reply = elysium_buffering_strategy:handle_pending_request
-                                   (Config, BS_Module, 0, Reply_Timeout, Node, Sid, Query_Request),
-                         handle_mod_fun_reply(Buffering_Strategy, Reply, Mod, Fun, Args)
+                true  ->
+                    After_Checkout_Connection = erlang:now(),
+                    Checkout_Connection_Duration = round(timer:now_diff(After_Checkout_Connection, Before_Checkout_Connection)/1000),
+                    elysium_prometheus:report_metrics(cassandra_get_connection_duration_milliseconds,
+                        Checkout_Connection_Duration),
+                    Reply_Timeout = elysium_config:request_reply_timeout(Config),
+                    Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
+                    Reply = elysium_buffering_strategy:handle_pending_request(Config, BS_Module, 0, Reply_Timeout, Node, Sid, Query_Request),
+                    handle_mod_fun_reply(Buffering_Strategy, Reply, Mod, Fun, Args)
             end
     end.
-
 
 %%%-----------------------------------------------------------------------
 %%% Internal connection support functions
@@ -312,3 +343,41 @@ handle_mod_fun_reply(_Buffering_Strategy, Reply, _Mod, _Fun, _Args) ->
 report_error(Error, Module, Function, Args) ->
     lager:error("~p:~p got ~p with ~p~n", [Module, Function, Error, Args]),
     {error, Error}.
+
+get_cmd_details(run_perform, [Query]) ->
+    do_get_cmd_details(Query);
+get_cmd_details(execute_prepared_query_internal, [Query, _Values]) ->
+    do_get_cmd_details(Query);
+get_cmd_details(run_insert, [Query, _Values]) ->
+    do_get_cmd_details(Query);
+%% following Funs are actually not used.
+%% add to avoid any crash
+get_cmd_details(run_prepare, _) ->
+    undefined;
+get_cmd_details(run_execute, _) ->
+    undefined.
+
+do_get_cmd_details(Query) ->
+    case string:tokens(Query, " ") of
+        ["INSERT", "INTO", Key | _] ->
+            [KeySpace, Table] = string:tokens(Key, "."),
+            {"INSERT", KeySpace, Table};
+        ["SELECT", "count(*)", "FROM", Key | _] ->
+            [KeySpace, Table] = string:tokens(Key, "."),
+            {"SELECT", KeySpace, Table};
+        ["SELECT", _, "FROM", Key | _] ->
+            [KeySpace, Table] = string:tokens(Key, "."),
+            {"SELECT", KeySpace, Table};
+        ["UPDATE", Key | _] ->
+            [KeySpace, Table] = string:tokens(Key, "."),
+            {"UPDATE", KeySpace, Table};
+        ["DELETE", "FROM", Key | _] ->
+            [KeySpace, Table] = string:tokens(Key, "."),
+            {"DELETE", KeySpace, Table};
+        ["CREATE", "TABLE", Key | _] ->
+            [KeySpace, Table] = string:tokens(Key, "."),
+            {"CREATE", KeySpace, Table};
+        _ ->
+            lager:warning("Unrecgonized Cassandra Query ~p when report to prometheus", [Query]),
+            undefined
+    end.
