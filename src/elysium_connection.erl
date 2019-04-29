@@ -171,30 +171,29 @@ with_connection(Config, Mod, Fun, Args, Consistency)
   when is_atom(Mod), is_atom(Fun), is_list(Args) ->
     true = erlang:function_exported(Mod, Fun, 3),
     {Buffering_Strategy, BS_Module} = get_buffer_strategy_module(Config),
-    Cmd_Details = get_cmd_details(Fun, Args),
     Before_Checkout_Connection = erlang:now(),
     case elysium_buffering_strategy:checkout_connection(Config) of
         none_available ->
             buffer_mod_fun_call(Config, Mod, Fun, Args, Consistency, Buffering_Strategy);
         {Node, Sid} when is_pid(Sid) ->
             case is_process_alive(Sid) of
-                false -> with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection, Cmd_Details);
+                false -> with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection);
                 true  ->
                     After_Checkout_Connection = erlang:now(),
                     Checkout_Connection_Duration =timer:now_diff(After_Checkout_Connection, Before_Checkout_Connection),
-                    elysium_prometheus:report_metrics(cassandra_get_connection_duration_microseconds, Cmd_Details, Checkout_Connection_Duration),
+                    report_prometheus_metrics(cassandra_get_connection_duration_microseconds, {Fun, Args}, Checkout_Connection_Duration),
                     Reply_Timeout = elysium_config:request_reply_timeout(Config),
                     Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
                     Before_Exec_Cmd = erlang:now(),
                     Reply = elysium_buffering_strategy:handle_pending_request(Config, BS_Module, 0, Reply_Timeout, Node, Sid, Query_Request),
                     After_Exec_Cmd = erlang:now(),
                     Exec_Cmd_Duration = timer:now_diff(After_Exec_Cmd, Before_Exec_Cmd),
-                    elysium_prometheus:report_metrics(cassandra_exec_cmd_duration_microseconds, Cmd_Details, Exec_Cmd_Duration),
+                    report_prometheus_metrics(cassandra_exec_cmd_duration_microseconds, {Fun, Args}, Exec_Cmd_Duration),
                     handle_mod_fun_reply(Buffering_Strategy, Reply, Mod, Fun, Args)
             end
     end.
 
-with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection, Cmd_Details)
+with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection)
     when is_atom(Mod), is_atom(Fun), is_list(Args) ->
     true = erlang:function_exported(Mod, Fun, 3),
     {Buffering_Strategy, BS_Module} = get_buffer_strategy_module(Config),
@@ -207,14 +206,14 @@ with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection,
                 true  ->
                     After_Checkout_Connection = erlang:now(),
                     Checkout_Connection_Duration = timer:now_diff(After_Checkout_Connection, Before_Checkout_Connection),
-                    elysium_prometheus:report_metrics(cassandra_get_connection_duration_microseconds, Cmd_Details, Checkout_Connection_Duration),
+                    report_prometheus_metrics(cassandra_get_connection_duration_microseconds, {Fun, Args}, Checkout_Connection_Duration),
                     Reply_Timeout = elysium_config:request_reply_timeout(Config),
                     Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
                     Before_Exec_Cmd = erlang:now(),
                     Reply = elysium_buffering_strategy:handle_pending_request(Config, BS_Module, 0, Reply_Timeout, Node, Sid, Query_Request),
                     After_Exec_Cmd = erlang:now(),
                     Exec_Cmd_Duration = timer:now_diff(After_Exec_Cmd, Before_Exec_Cmd),
-                    elysium_prometheus:report_metrics(cassandra_exec_cmd_duration_microseconds, Cmd_Details, Exec_Cmd_Duration),
+                    report_prometheus_metrics(cassandra_exec_cmd_duration_microseconds, {Fun, Args}, Exec_Cmd_Duration),
                     handle_mod_fun_reply(Buffering_Strategy, Reply, Mod, Fun, Args)
             end
     end.
@@ -384,3 +383,6 @@ do_get_cmd_details(Query) ->
             lager:warning("Unrecgonized Cassandra Query ~p when report to prometheus", [Query]),
             undefined
     end.
+
+report_prometheus_metrics(Type, {Fun, Args}, Checkout_Connection_Duration) ->
+    spawn(fun() -> elysium_prometheus:report_metrics(Type, get_cmd_details(Fun, Args), Checkout_Connection_Duration) end).
