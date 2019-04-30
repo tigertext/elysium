@@ -75,6 +75,8 @@ init({Config}) ->
     Discovery_Proc = ?CHILD(elysium_peer_handler,  [Config]),
     Conn_Sup    = ?SUPER(elysium_connection_sup,         []),
 
+    elysium_prometheus:setup(),
+
     Serial_Session_Queue = ?CHILD(elysium_serial_sessions, elysium_serial_queue, [Session_Queue_Name]),
     Serial_Pending_Queue = ?CHILD(elysium_serial_pendings, elysium_serial_queue, [Pending_Queue_Name]),
     Serial_LB_Queue = ?CHILD(elysium_serial_lb, elysium_lb_queue, [Config, Lb_Queue_Name]),
