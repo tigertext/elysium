@@ -41,4 +41,4 @@ do_setup() ->
 report_metrics(_Metric_Name, undefined, _Duration) ->
     ok;
 report_metrics(Metric_Name, {Cmd_Type, KeySpace, Table}, Duration) ->
-    is_prometheus_started() andalso prometheus_histogram:observe(Metric_Name, [node(), KeySpace, Table, Cmd_Type], Duration).
+    config:get_env(prometheus_collect_cassandra_metrics, false) andalso prometheus_histogram:observe(Metric_Name, [node(), KeySpace, Table, Cmd_Type], Duration).
