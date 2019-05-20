@@ -360,7 +360,7 @@ get_cmd_details(run_execute, _) ->
     undefined.
 
 do_get_cmd_details(Query) ->
-    case string:tokens(Query, " ") of
+    case string:tokens(lists:flatten(Query), " ") of
         ["INSERT", "INTO", Key | _] ->
             [KeySpace, Table] = string:tokens(Key, "."),
             {"INSERT", KeySpace, Table};
