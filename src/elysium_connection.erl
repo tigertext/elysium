@@ -180,8 +180,8 @@ with_connection(Config, Mod, Fun, Args, Consistency)
                 false -> with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection);
                 true  ->
                     After_Checkout_Connection = erlang:now(),
-                    Checkout_Connection_Duration =timer:now_diff(After_Checkout_Connection, Before_Checkout_Connection),
-                    report_prometheus_metrics(cassandra_get_connection_duration_microseconds, {Fun, Args}, Checkout_Connection_Duration),
+                    _Checkout_Connection_Duration =timer:now_diff(After_Checkout_Connection, Before_Checkout_Connection),
+                    %% report_prometheus_metrics(cassandra_get_connection_duration_microseconds, {Fun, Args}, Checkout_Connection_Duration),
                     Reply_Timeout = elysium_config:request_reply_timeout(Config),
                     Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
                     Before_Exec_Cmd = erlang:now(),
@@ -205,8 +205,8 @@ with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection)
                 false -> with_connection(Config, Mod, Fun, Args, Consistency);
                 true  ->
                     After_Checkout_Connection = erlang:now(),
-                    Checkout_Connection_Duration = timer:now_diff(After_Checkout_Connection, Before_Checkout_Connection),
-                    report_prometheus_metrics(cassandra_get_connection_duration_microseconds, {Fun, Args}, Checkout_Connection_Duration),
+                    _Checkout_Connection_Duration = timer:now_diff(After_Checkout_Connection, Before_Checkout_Connection),
+                    %%report_prometheus_metrics(cassandra_get_connection_duration_microseconds, {Fun, Args}, Checkout_Connection_Duration),
                     Reply_Timeout = elysium_config:request_reply_timeout(Config),
                     Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
                     Before_Exec_Cmd = erlang:now(),
