@@ -7,6 +7,8 @@
 
 
 -define(DEFAULT_REGISTRY, default).
+-define(DEFAULT_MACHINE_NAME, config:get_env(machine_name, "anonymous_machine")).
+
 
 setup() ->
     is_prometheus_started() andalso do_setup().
@@ -16,29 +18,29 @@ is_prometheus_started() ->
 
 do_setup() ->
     Get_Connection_Duration_Buckets =
-        case application:get_env(elysium, prometheus_default_cassandra_get_connection_duration_buckets, [125, 250, 500, 750, 1000, 1250, 1500, 2000, 3000, 5000, 7500, 10000]) of
+        case application:get_env(elysium, prometheus_default_cassandra_get_connection_duration_buckets, [10, 100, 500, 1000, 2500, 5000, 10000, 50000, 100000, 250000, 500000, 1000000]) of
             {ok, V1} -> V1;
             V2 -> V2
         end,
     prometheus_histogram:declare([
         {name, cassandra_get_connection_duration_microseconds},
         {registry, ?DEFAULT_REGISTRY},
-        {labels, [originating_server, destination_keyspace, destination_table, command_type]},
+        {labels, [machine_name, destination_keyspace, destination_table, command_type]},
         {buckets, Get_Connection_Duration_Buckets},
         {help, "The time to get cassandra connection from connection pool in microseconds."}]),
     Exec_Cmd_Duration_Buckets =
-        case application:get_env(elysium, prometheus_default_cassandra_exec_cmd_duration_buckets, [125, 250, 500, 750, 1000, 1250, 1500, 2000, 3000, 5000, 7500, 10000]) of
+        case application:get_env(elysium, prometheus_default_cassandra_exec_cmd_duration_buckets, [10, 100, 500, 1000, 2500, 5000, 10000, 50000, 100000, 250000, 500000, 1000000]) of
             {ok, V3} -> V3;
             V4 -> V4
         end,
     prometheus_histogram:declare([
         {name, cassandra_exec_cmd_duration_microseconds},
         {registry, ?DEFAULT_REGISTRY},
-        {labels, [originating_server, destination_keyspace, destination_table, command_type]},
+        {labels, [machine_name, destination_keyspace, destination_table, command_type]},
         {buckets, Exec_Cmd_Duration_Buckets},
         {help, "The time to execute cassandra commands against DB in microseconds."}]).
 
 report_metrics(_Metric_Name, undefined, _Duration) ->
     ok;
 report_metrics(Metric_Name, {Cmd_Type, KeySpace, Table}, Duration) ->
-    config:get_env(prometheus_collect_cassandra_metrics, false) andalso prometheus_histogram:observe(Metric_Name, [node(), KeySpace, Table, Cmd_Type], Duration).
+    config:get_env(prometheus_collect_cassandra_metrics, false) andalso prometheus_histogram:observe(Metric_Name, [?DEFAULT_MACHINE_NAME, KeySpace, Table, Cmd_Type], Duration).
