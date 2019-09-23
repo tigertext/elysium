@@ -148,7 +148,7 @@ all_config_bins() ->
 
 -spec is_valid_config(config_type())  -> boolean().
 %% @doc Verify that the configuration is a valid construct and has all the parameter attributes supported.
-is_valid_config ({config_app_config, App}) -> true;
+is_valid_config ({config_app_config, _App}) -> true;
 is_valid_config ({vbisect,       Bindict}) -> is_valid_config_vbisect(Bindict);
 is_valid_config ({config_mod,     Module}) -> {module, Module} = code:ensure_loaded(Module),
                                               is_valid_config_module(Module).

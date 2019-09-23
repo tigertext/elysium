@@ -190,7 +190,7 @@ with_connection(Config, Mod, Fun, Args, Consistency)
             end
     end.
 
-with_connection(Config, Mod, Fun, Args, Consistency, Before_Checkout_Connection)
+with_connection(Config, Mod, Fun, Args, Consistency, _Before_Checkout_Connection)
     when is_atom(Mod), is_atom(Fun), is_list(Args) ->
     true = erlang:function_exported(Mod, Fun, 3),
     {Buffering_Strategy, BS_Module} = get_buffer_strategy_module(Config),
