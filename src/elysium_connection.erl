@@ -171,7 +171,7 @@ with_connection(Config, Mod, Fun, Args, Consistency)
   when is_atom(Mod), is_atom(Fun), is_list(Args) ->
     true = erlang:function_exported(Mod, Fun, 3),
     {Buffering_Strategy, BS_Module} = get_buffer_strategy_module(Config),
-    Before_Checkout_Connection = erlang:now(),
+    Before_Checkout_Connection = erlang:timestamp(),
     case elysium_buffering_strategy:checkout_connection(Config) of
         none_available ->
             buffer_mod_fun_call(Config, Mod, Fun, Args, Consistency, Buffering_Strategy);
@@ -181,9 +181,9 @@ with_connection(Config, Mod, Fun, Args, Consistency)
                 true  ->
                     Reply_Timeout = elysium_config:request_reply_timeout(Config),
                     Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
-                    Before_Exec_Cmd = erlang:now(),
+                    Before_Exec_Cmd = erlang:timestamp(),
                     Reply = elysium_buffering_strategy:handle_pending_request(Config, BS_Module, 0, Reply_Timeout, Node, Sid, Query_Request),
-                    After_Exec_Cmd = erlang:now(),
+                    After_Exec_Cmd = erlang:timestamp(),
                     Exec_Cmd_Duration = timer:now_diff(After_Exec_Cmd, Before_Exec_Cmd),
                     report_prometheus_metrics(cassandra_exec_cmd_duration_microseconds, {Fun, Args}, Exec_Cmd_Duration),
                     handle_mod_fun_reply(Buffering_Strategy, Reply, Mod, Fun, Args)
@@ -203,9 +203,9 @@ with_connection(Config, Mod, Fun, Args, Consistency, _Before_Checkout_Connection
                 true  ->
                     Reply_Timeout = elysium_config:request_reply_timeout(Config),
                     Query_Request = {mod_fun, Config, Mod, Fun, Args, Consistency},
-                    Before_Exec_Cmd = erlang:now(),
+                    Before_Exec_Cmd = erlang:timestamp(),
                     Reply = elysium_buffering_strategy:handle_pending_request(Config, BS_Module, 0, Reply_Timeout, Node, Sid, Query_Request),
-                    After_Exec_Cmd = erlang:now(),
+                    After_Exec_Cmd = erlang:timestamp(),
                     Exec_Cmd_Duration = timer:now_diff(After_Exec_Cmd, Before_Exec_Cmd),
                     report_prometheus_metrics(cassandra_exec_cmd_duration_microseconds, {Fun, Args}, Exec_Cmd_Duration),
                     handle_mod_fun_reply(Buffering_Strategy, Reply, Mod, Fun, Args)

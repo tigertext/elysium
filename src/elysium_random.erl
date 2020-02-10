@@ -17,12 +17,4 @@
 -export([random_int_up_to/1]).
 
 random_int_up_to(Max) ->
-    _ = maybe_seed(),
-    random:uniform(Max).
-
-maybe_seed() ->
-    case get(random_seed) of
-        undefined -> random:seed(os:timestamp());
-        {X, X, X} -> random:seed(os:timestamp());
-        _         -> ok
-    end.
+    rand:uniform(Max).

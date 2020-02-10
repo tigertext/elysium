@@ -451,15 +451,15 @@ exec_pending_request(Reply_Ref, Reply_Pid, Node, Sid,
                      {bare_fun, Config, Query_Fun, Args, Consistency}) ->
     try   Reply = Query_Fun(Sid, Args, Consistency),
           Reply_Pid ! {wrr, Reply_Ref, Reply}
-    catch A:B -> lager:error("Query execution caught ~p:~p for ~p ~p ~9999p~n",
-                             [A,B, Reply_Pid, Args, erlang:get_stacktrace()])
+    catch A:B:Trace -> lager:error("Query execution caught ~p:~p for ~p ~p ~9999p~n",
+                             [A,B, Reply_Pid, Args, Trace])
     after _ = checkin_connection(Config, Node, Sid, false)
     end;
 exec_pending_request(Reply_Ref, Reply_Pid, Node, Sid,
                      {mod_fun,  Config, Mod,  Fun, Args, Consistency}) ->
     try   Reply = Mod:Fun(Sid, Args, Consistency),
           Reply_Pid ! {wrr, Reply_Ref, Reply}
-    catch A:B -> lager:error("Query execution caught ~p:~p for ~p ~p ~9999p~n",
-                             [A,B, Reply_Pid, Args, erlang:get_stacktrace()])
+    catch A:B:Trace -> lager:error("Query execution caught ~p:~p for ~p ~p ~9999p~n",
+                             [A,B, Reply_Pid, Args, Trace])
     after _ = checkin_connection(Config, Node, Sid, false)
     end.
