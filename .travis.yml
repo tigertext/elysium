@@ -1,7 +1,6 @@
 language: erlang
 otp_release:
-    - R16B03-1
-    - R16B03
+    - 22.2
 
 before_script: "make plt"
 script: "make tests && make dialyze"
