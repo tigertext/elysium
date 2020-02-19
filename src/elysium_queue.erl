@@ -237,8 +237,8 @@ handle_common(info, {'DOWN', _Ref, process,  Connection_Attempt, Reason}, _State
     Reason =:= normal
         orelse lager:warning("Elysium connection in process ~p could not be established: ~p~n",
         [Connection_Attempt, Reason]),
-    {keep_state_and_data};
+    keep_state_and_data;
 handle_common(_EventType, _EventContent, _State_Name, _EventData) ->
-    {keep_state_and_data}.
+    keep_state_and_data.
 
 
