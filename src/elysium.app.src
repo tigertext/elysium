@@ -5,7 +5,7 @@
   {id, "elysium"},
   {registered, [elysium_sup, elysium_connection_sup]},
   {applications, [kernel, stdlib]},
-  {included_applications, [eper, seestar, vbisect]},
+  {included_applications, [epocxy, eper, seestar, vbisect]},
   {mod, {elysium, []}},
   {modules, []},
   {env, []}
