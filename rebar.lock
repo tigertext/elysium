@@ -1,0 +1,28 @@
+{"1.1.0",
+[{<<"edown">>,
+  {git,"https://github.com/tigertext/edown.git",
+       {ref,"754be25f71a04099c83f3ffdff268e70beeb0021"}},
+  1},
+ {<<"eper">>,{pkg,<<"eper">>,<<"0.94.0">>},0},
+ {<<"epocxy">>,
+  {git,"git@github.com:duomark/epocxy.git",
+       {ref,"874f7f747cfd983d01917279bec54865f2dac597"}},
+  0},
+ {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.8">>},1},
+ {<<"ibrowse">>,{pkg,<<"ibrowse">>,<<"4.2.2">>},0},
+ {<<"lager">>,{pkg,<<"lager">>,<<"3.2.1">>},0},
+ {<<"seestar">>,
+  {git,"git@github.com:tigertext/seestar.git",
+       {ref,"b3944f07fc3557c1f29ac4ed8f9f190f9e293639"}},
+  0},
+ {<<"vbisect">>,
+  {git,"git@github.com:TT-Markus/vbisect.git",
+       {ref,"178f894b40e32c1de2e938d6dfa3bc88dd7b9a76"}},
+  0}]}.
+[
+{pkg_hash,[
+ {<<"eper">>, <<"F5FB2DAA0DF8878748E1C598428EDA942A173E5121FF35C1D632129B84593A3A">>},
+ {<<"goldrush">>, <<"2024BA375CEEA47E27EA70E14D2C483B2D8610101B4E852EF7F89163CDB6E649">>},
+ {<<"ibrowse">>, <<"B32B5BAFCC77B7277EFF030ED32E1ACC3F610C64E9F6AEA19822ABCADF681B4B">>},
+ {<<"lager">>, <<"EEF4E18B39E4195D37606D9088EA05BF1B745986CF8EC84F01D332456FE88D17">>}]}
+].
