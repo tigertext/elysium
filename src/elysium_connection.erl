@@ -370,10 +370,10 @@ do_get_cmd_details(Query) ->
         ["DELETE", "FROM", Key | _] ->
             [KeySpace, Table] = string:tokens(Key, "."),
             {"DELETE", KeySpace, Table};
-        ["CREATE", "TABLE", Key | _] ->
+        ["CREATE", "TABLE", "IF", "NOT", "EXISTS", Key | _] ->
             [KeySpace, Table] = string:tokens(Key, "."),
             {"CREATE", KeySpace, Table};
-        ["CREATE", "TABLE", "IF", "NOT", "EXISTS", Key | _] ->
+        ["CREATE", "TABLE", Key | _] ->
             [KeySpace, Table] = string:tokens(Key, "."),
             {"CREATE", KeySpace, Table};
         _ ->
