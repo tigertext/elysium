@@ -373,6 +373,9 @@ do_get_cmd_details(Query) ->
         ["CREATE", "TABLE", Key | _] ->
             [KeySpace, Table] = string:tokens(Key, "."),
             {"CREATE", KeySpace, Table};
+        ["CREATE", "TABLE", "IF", "NOT", "EXISTS", Key | _] ->
+            [KeySpace, Table] = string:tokens(Key, "."),
+            {"CREATE", KeySpace, Table};
         _ ->
             lager:warning("Unrecgonized Cassandra Query ~p when report to prometheus", [Query]),
             undefined
