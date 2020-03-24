@@ -7,7 +7,7 @@
 
 
 -define(DEFAULT_REGISTRY, default).
--define(DEFAULT_MACHINE_NAME, config:get_env(machine_name, "anonymous_machine")).
+-define(DEFAULT_MACHINE_NAME, try config:get_env(machine_name, "anonymous_machine") catch _:_ -> "anonymous_machine" end).
 
 
 setup() ->
@@ -43,4 +43,9 @@ do_setup() ->
 report_metrics(_Metric_Name, undefined, _Duration) ->
     ok;
 report_metrics(Metric_Name, {Cmd_Type, KeySpace, Table}, Duration) ->
-    config:get_env(prometheus_collect_cassandra_metrics, false) andalso prometheus_histogram:observe(Metric_Name, [?DEFAULT_MACHINE_NAME, KeySpace, Table, Cmd_Type], Duration).
+    if_collect_cassandra_metrics() andalso prometheus_histogram:observe(Metric_Name, [?DEFAULT_MACHINE_NAME, KeySpace, Table, Cmd_Type], Duration).
+
+if_collect_cassandra_metrics() ->
+    try config:get_env(prometheus_collect_cassandra_metrics, false)
+    catch _:_ -> false
+    end.
