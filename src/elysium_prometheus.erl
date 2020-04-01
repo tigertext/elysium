@@ -40,12 +40,70 @@ do_setup() ->
         {buckets, Exec_Cmd_Duration_Buckets},
         {help, "The time to execute cassandra commands against DB in microseconds."}]).
 
-report_metrics(_Metric_Name, undefined, _Duration) ->
-    ok;
-report_metrics(Metric_Name, {Cmd_Type, KeySpace, Table}, Duration) ->
-    if_collect_cassandra_metrics() andalso prometheus_histogram:observe(Metric_Name, [?DEFAULT_MACHINE_NAME, KeySpace, Table, Cmd_Type], Duration).
+report_metrics(Metric_Name, {Fun, Args}, Duration) ->
+    case if_collect_cassandra_metrics() of
+        false ->
+            ok;
+        true ->
+            case get_cmd_details(Fun, Args) of
+                undefined ->
+                    ok;
+                {KeySpace, Table, Cmd_Type} ->
+                    prometheus_histogram:observe(Metric_Name, [?DEFAULT_MACHINE_NAME, KeySpace, Table, Cmd_Type], Duration)
+            end
+    end.
 
 if_collect_cassandra_metrics() ->
     try config:get_env(prometheus_collect_cassandra_metrics, false)
     catch _:_ -> false
+    end.
+
+get_cmd_details(run_perform, [Query]) ->
+    do_get_cmd_details(Query);
+get_cmd_details(execute_prepared_query_internal, [Query, _Values]) ->
+    do_get_cmd_details(Query);
+get_cmd_details(run_insert, [Query, _Values]) ->
+    do_get_cmd_details(Query);
+%% following Funs are actually not used.
+%% add to avoid any crash
+get_cmd_details(run_prepare, _) ->
+    undefined;
+get_cmd_details(run_execute, _) ->
+    undefined.
+
+do_get_cmd_details(Query) ->
+    case Query of
+        ["SELECT ", _, " FROM ", Key | _] ->
+            [KeySpace, Table] = string:tokens(Key, "."),
+            {"SELECT", KeySpace, Table};
+        _ ->
+            case string:tokens(lists:flatten(Query), " ") of
+                ["INSERT", "INTO", Key | _] ->
+                    [KeySpace, Table] = string:tokens(Key, "."),
+                    {"INSERT", KeySpace, Table};
+                ["SELECT", "count(*)", "FROM", Key | _] ->
+                    [KeySpace, Table] = string:tokens(Key, "."),
+                    {"SELECT", KeySpace, Table};
+                ["SELECT", _, "FROM", Key | _] ->
+                    [KeySpace, Table] = string:tokens(Key, "."),
+                    {"SELECT", KeySpace, Table};
+                ["UPDATE", Key | _] ->
+                    [KeySpace, Table] = string:tokens(Key, "."),
+                    {"UPDATE", KeySpace, Table};
+                ["DELETE", "FROM", Key | _] ->
+                    [KeySpace, Table] = string:tokens(Key, "."),
+                    {"DELETE", KeySpace, Table};
+                ["CREATE", "TABLE", "IF", "NOT", "EXISTS", Key | _] ->
+                    [KeySpace, Table] = string:tokens(Key, "."),
+                    {"CREATE", KeySpace, Table};
+                ["CREATE", "TABLE", Key | _] ->
+                    [KeySpace, Table] = string:tokens(Key, "."),
+                    {"CREATE", KeySpace, Table};
+                ["CREATE", "COLUMNFAMILY", Key | _] ->
+                    [KeySpace, Table] = string:tokens(Key, "."),
+                    {"CREATE", KeySpace, Table};
+                _ ->
+                    lager:warning("Unrecgonized Cassandra Query ~p when report to prometheus", [Query]),
+                    undefined
+            end
     end.

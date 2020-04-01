@@ -340,46 +340,5 @@ report_error(Error, Module, Function, Args) ->
     lager:error("~p:~p got ~p with ~p~n", [Module, Function, Error, Args]),
     {error, Error}.
 
-get_cmd_details(run_perform, [Query]) ->
-    do_get_cmd_details(Query);
-get_cmd_details(execute_prepared_query_internal, [Query, _Values]) ->
-    do_get_cmd_details(Query);
-get_cmd_details(run_insert, [Query, _Values]) ->
-    do_get_cmd_details(Query);
-%% following Funs are actually not used.
-%% add to avoid any crash
-get_cmd_details(run_prepare, _) ->
-    undefined;
-get_cmd_details(run_execute, _) ->
-    undefined.
-
-do_get_cmd_details(Query) ->
-    case string:tokens(lists:flatten(Query), " ") of
-        ["INSERT", "INTO", Key | _] ->
-            [KeySpace, Table] = string:tokens(Key, "."),
-            {"INSERT", KeySpace, Table};
-        ["SELECT", "count(*)", "FROM", Key | _] ->
-            [KeySpace, Table] = string:tokens(Key, "."),
-            {"SELECT", KeySpace, Table};
-        ["SELECT", _, "FROM", Key | _] ->
-            [KeySpace, Table] = string:tokens(Key, "."),
-            {"SELECT", KeySpace, Table};
-        ["UPDATE", Key | _] ->
-            [KeySpace, Table] = string:tokens(Key, "."),
-            {"UPDATE", KeySpace, Table};
-        ["DELETE", "FROM", Key | _] ->
-            [KeySpace, Table] = string:tokens(Key, "."),
-            {"DELETE", KeySpace, Table};
-        ["CREATE", "TABLE", "IF", "NOT", "EXISTS", Key | _] ->
-            [KeySpace, Table] = string:tokens(Key, "."),
-            {"CREATE", KeySpace, Table};
-        ["CREATE", "TABLE", Key | _] ->
-            [KeySpace, Table] = string:tokens(Key, "."),
-            {"CREATE", KeySpace, Table};
-        _ ->
-            lager:warning("Unrecgonized Cassandra Query ~p when report to prometheus", [Query]),
-            undefined
-    end.
-
 report_prometheus_metrics(Type, {Fun, Args}, Checkout_Connection_Duration) ->
-    spawn(fun() -> elysium_prometheus:report_metrics(Type, get_cmd_details(Fun, Args), Checkout_Connection_Duration) end).
+    spawn(fun() -> elysium_prometheus:report_metrics(Type, {Fun, Args}, Checkout_Connection_Duration) end).
