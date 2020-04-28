@@ -17,4 +17,13 @@
 -export([random_int_up_to/1]).
 
 random_int_up_to(Max) ->
+    _ = maybe_seed(),
     rand:uniform(Max).
+
+maybe_seed() ->	
+    case get(random_seed) of	
+        undefined -> 
+            V = rand:seed(exsss), 
+            put(random_seed, V); 
+        _         -> ok	
+    end.
