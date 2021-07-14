@@ -48,7 +48,7 @@ report_metrics(Metric_Name, {Fun, Args}, Duration) ->
             case get_cmd_details(Fun, Args) of
                 undefined ->
                     ok;
-                {KeySpace, Table, Cmd_Type} ->
+                {Cmd_Type, KeySpace, Table} ->
                     prometheus_histogram:observe(Metric_Name, [?DEFAULT_MACHINE_NAME, KeySpace, Table, Cmd_Type], Duration)
             end
     end.
