@@ -18,7 +18,7 @@
          code_change/3]).
 
 -include("elysium_types.hrl").
--include_lib("seestar/src/seestar_messages.hrl").
+-include_lib("../seestar/src/seestar_messages.hrl").
 
 -record(state, {
           nodes = []               :: [cassandra_node()],

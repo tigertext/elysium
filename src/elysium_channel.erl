@@ -19,9 +19,9 @@
 
 -behaviour(gen_server).
 
--include_lib("seestar/src/seestar_messages.hrl").
--include_lib("seestar/include/builtin_types.hrl").
--include_lib("seestar/include/buffer.hrl").
+-include_lib("../seestar/src/seestar_messages.hrl").
+-include_lib("../seestar/include/builtin_types.hrl").
+-include_lib("../seestar/include/buffer.hrl").
 
 %% API exports.
 -export([start_link/2, start_link/3, start_link/4, stop/1]).
