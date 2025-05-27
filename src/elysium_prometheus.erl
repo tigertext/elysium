@@ -7,7 +7,7 @@
 
 
 -define(DEFAULT_REGISTRY, default).
--define(DEFAULT_MACHINE_NAME, try config:get_env(machine_name, "anonymous_machine") catch _:_ -> "anonymous_machine" end).
+-define(FIXED_MACHINE_NAME, "anonymous_machine").
 
 
 setup() ->
@@ -49,7 +49,7 @@ report_metrics(Metric_Name, {Fun, Args}, Duration) ->
                 undefined ->
                     ok;
                 {Cmd_Type, KeySpace, Table} ->
-                    prometheus_histogram:observe(Metric_Name, [?DEFAULT_MACHINE_NAME, KeySpace, Table, Cmd_Type], Duration)
+                    prometheus_histogram:observe(Metric_Name, [?FIXED_MACHINE_NAME, KeySpace, Table, Cmd_Type], Duration)
             end
     end.
 
